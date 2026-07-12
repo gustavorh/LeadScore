@@ -1,6 +1,6 @@
 {
   "dataset": "retailrocket",
-  "created_at": "2026-07-12T23:40:20.370265+00:00",
+  "created_at": "2026-07-12T23:49:43.297577+00:00",
   "version": "1.0.0",
   "seed": 42,
   "baseline": {
@@ -17,7 +17,7 @@
   },
   "ensemble": {
     "method": "stacking",
-    "threshold": 0.30892858014394875
+    "threshold": 0.8914603279360482
   },
   "segments": {
     "2": "decidido",

@@ -80,7 +80,10 @@ def fit_ensemble(val_probs: dict[str, np.ndarray], y_val: np.ndarray) -> HybridE
     """Ajusta el stacking en validación; fallback a promedio si algo falla."""
     x = _stack(val_probs)
     try:
-        lr = LogisticRegression(max_iter=1000, random_state=SEED)
+        # class_weight='balanced': evita que el stacking comprima p_final hacia
+        # la tasa base (~4%); así una sesión de alta intención alcanza la banda
+        # "caliente" (§5.5) en vez de quedar siempre en "frío".
+        lr = LogisticRegression(max_iter=1000, random_state=SEED, class_weight="balanced")
         lr.fit(x, y_val)
         ens = HybridEnsemble(
             method="stacking",
