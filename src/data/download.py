@@ -10,11 +10,19 @@ Todo se cachea en `data/raw/` para no re-descargar.
 from __future__ import annotations
 
 import subprocess
+import sys
+import zipfile
 from pathlib import Path
 
 import pandas as pd
 
 from src import config
+
+
+def _kaggle_cmd() -> str:
+    """Ruta del ejecutable `kaggle`, preferentemente el del venv actual."""
+    candidate = Path(sys.executable).with_name("kaggle")
+    return str(candidate) if candidate.exists() else "kaggle"
 
 # --------------------------------------------------------------------------- #
 # UCI Online Shoppers (§4.2)
@@ -51,29 +59,42 @@ RAW_RETAILROCKET: Path = config.DATA_RAW / "retailrocket"
 KAGGLE_SLUG: str = "retailrocket/ecommerce-dataset"
 
 
-def download_retailrocket() -> Path:
-    """Descarga RetailRocket vía Kaggle CLI; si falla, instruye descarga manual.
+EVENTS_CSV: Path = RAW_RETAILROCKET / "events.csv"
 
-    Devuelve el directorio con los CSV (`events.csv`, `category_tree.csv`, ...).
+
+def download_retailrocket() -> Path:
+    """Descarga solo `events.csv` de RetailRocket vía Kaggle CLI.
+
+    Las categorías se difieren a v1 (no se necesita `category_tree.csv`), así que
+    basta con el archivo de eventos (~90 MB). Si falla, instruye descarga manual.
+    Devuelve la ruta de `events.csv`.
     """
-    events = RAW_RETAILROCKET / "events.csv"
-    if events.exists():
-        return RAW_RETAILROCKET
+    if EVENTS_CSV.exists():
+        return EVENTS_CSV
 
     RAW_RETAILROCKET.mkdir(parents=True, exist_ok=True)
     try:
+        # Con `-f` (archivo único) Kaggle descarga un .zip aunque se pase
+        # --unzip, así que lo extraemos manualmente después.
         subprocess.run(
-            ["kaggle", "datasets", "download", "-d", KAGGLE_SLUG,
-             "-p", str(RAW_RETAILROCKET), "--unzip"],
+            [_kaggle_cmd(), "datasets", "download", "-d", KAGGLE_SLUG,
+             "-f", "events.csv", "-p", str(RAW_RETAILROCKET)],
             check=True,
         )
     except (subprocess.CalledProcessError, FileNotFoundError) as exc:
         raise RuntimeError(
             "No se pudo descargar RetailRocket vía Kaggle CLI. "
-            "Configura credenciales (~/.kaggle/kaggle.json o KAGGLE_KEY) o "
-            f"descarga manualmente '{KAGGLE_SLUG}' en {RAW_RETAILROCKET}."
+            "Configura credenciales (~/.kaggle/access_token o kaggle.json) o "
+            f"descarga manualmente 'events.csv' de '{KAGGLE_SLUG}' en "
+            f"{RAW_RETAILROCKET}."
         ) from exc
-    return RAW_RETAILROCKET
+
+    zip_path = RAW_RETAILROCKET / "events.csv.zip"
+    if zip_path.exists():
+        with zipfile.ZipFile(zip_path) as zf:
+            zf.extractall(RAW_RETAILROCKET)
+        zip_path.unlink()
+    return EVENTS_CSV
 
 
 if __name__ == "__main__":
