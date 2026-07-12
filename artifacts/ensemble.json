@@ -1,0 +1,15 @@
+{
+  "method": "stacking",
+  "coef": [
+    0.027143918112949236,
+    5.145377109138616,
+    0.982817626657233
+  ],
+  "intercept": -6.298817748183631,
+  "threshold": 0.30892858014394875,
+  "model_order": [
+    "baseline",
+    "gru",
+    "transformer"
+  ]
+}

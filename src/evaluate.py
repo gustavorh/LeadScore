@@ -128,13 +128,15 @@ def _evaluate_retailrocket() -> dict:
     y_true = test["converted"].to_numpy()
     models_metrics: dict[str, dict] = {}
 
+    probs: dict[str, np.ndarray] = {}
+
     # --- Baseline tabular ---
     x_tab = features.tabular_from_sessions(test).to_numpy(dtype=float)
     scaler = joblib.load(config.ARTIFACTS / "scaler.joblib")
     base = joblib.load(config.ARTIFACTS / "baseline.joblib")
-    p_base = base.predict_proba(scaler.transform(x_tab))[:, 1]
-    models_metrics["baseline"] = compute_metrics(y_true, p_base)
-    _save_confusion(y_true, (p_base >= 0.5).astype(int), "baseline")
+    probs["baseline"] = base.predict_proba(scaler.transform(x_tab))[:, 1]
+    models_metrics["baseline"] = compute_metrics(y_true, probs["baseline"])
+    _save_confusion(y_true, (probs["baseline"] >= 0.5).astype(int), "baseline")
 
     # --- Modelos secuenciales ---
     test_ds = sequence.SessionDataset(test, vocab["delta_mean"], vocab["delta_std"])
@@ -142,11 +144,21 @@ def _evaluate_retailrocket() -> dict:
     for name, model in (("gru", GRUClassifier()), ("transformer", TransformerClassifier())):
         model.load_state_dict(torch.load(config.ARTIFACTS / f"{name}.pt", map_location=device))
         model.to(device)
-        prob = sequence.predict_proba(model, test_loader, device)
-        models_metrics[name] = compute_metrics(y_true, prob)
-        _save_confusion(y_true, (prob >= 0.5).astype(int), name)
+        probs[name] = sequence.predict_proba(model, test_loader, device)
+        models_metrics[name] = compute_metrics(y_true, probs[name])
+        _save_confusion(y_true, (probs[name] >= 0.5).astype(int), name)
         if name == "transformer":
             _save_attention_heatmap(model, test, vocab, device)
+
+    # --- Ensamble híbrido (umbral calibrado en validación) ---
+    from src.models.ensemble import HybridEnsemble
+
+    ens = HybridEnsemble.from_dict(json.loads((config.ARTIFACTS / "ensemble.json").read_text()))
+    p_final = ens.combine(probs)
+    m = compute_metrics(y_true, p_final, threshold=ens.threshold)
+    m["threshold"] = ens.threshold
+    models_metrics["ensemble"] = m
+    _save_confusion(y_true, (p_final >= ens.threshold).astype(int), "ensemble")
 
     return {"dataset": "retailrocket", "n_test": int(len(test)), "models": models_metrics}
 

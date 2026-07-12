@@ -139,6 +139,7 @@ def _train_retailrocket() -> None:
     val_loader = sequence.make_loader(val_ds, config.BATCH_SIZE, shuffle=False)
 
     seq_metrics = {}
+    trained: dict[str, "torch.nn.Module"] = {}
     for name, model in (("gru", GRUClassifier()), ("transformer", TransformerClassifier())):
         config.set_seed()  # misma inicialización de datos entre modelos
         info = sequence.fit_sequence_model(
@@ -147,7 +148,29 @@ def _train_retailrocket() -> None:
         model.to("cpu")
         torch.save(model.state_dict(), config.ARTIFACTS / f"{name}.pt")
         seq_metrics[name] = info
+        trained[name] = model
         print(f"[train] {name}: val_AUC={info['val_auc']:.4f} ({info['epochs']} épocas)")
+
+    # --- K-means + ensamble híbrido (§5.4/§5.5), calibrados en validación ---
+    from src.models import clustering, ensemble
+
+    kmeans = clustering.fit_kmeans(x_scaled[tr])
+    joblib.dump(kmeans, config.ARTIFACTS / "kmeans.joblib", compress=3)
+    segment_names = clustering.name_clusters(kmeans.cluster_centers_, feature_names)
+
+    val_probs = {
+        "baseline": baseline_res["model"].predict_proba(x_scaled[va])[:, 1],
+        "gru": sequence.predict_proba(trained["gru"], val_loader, device),
+        "transformer": sequence.predict_proba(trained["transformer"], val_loader, device),
+    }
+    ens = ensemble.fit_ensemble(val_probs, y_np[va])
+    (config.ARTIFACTS / "ensemble.json").write_text(
+        json.dumps(ens.to_dict(), indent=2, ensure_ascii=False)
+    )
+    print(
+        f"[train] ensemble={ens.method} umbral={ens.threshold:.3f} | "
+        f"segmentos={list(segment_names.values())}"
+    )
 
     # --- Contratos de artefactos ---
     vocab = {
@@ -182,6 +205,8 @@ def _train_retailrocket() -> None:
             "all_val_f1": baseline_res["all_f1"],
         },
         "sequential": {k: v["val_auc"] for k, v in seq_metrics.items()},
+        "ensemble": {"method": ens.method, "threshold": ens.threshold},
+        "segments": {str(k): v for k, v in segment_names.items()},
         "feature_names": feature_names,
         "n_features": len(feature_names),
         "splits": {
