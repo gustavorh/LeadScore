@@ -97,3 +97,49 @@ def fit_scaler(x_train: np.ndarray | pd.DataFrame) -> StandardScaler:
     scaler = StandardScaler()
     scaler.fit(np.asarray(x_train, dtype=float))
     return scaler
+
+
+def add_visitor_split(sessions: pd.DataFrame, seed: int = SEED) -> pd.DataFrame:
+    """Añade la columna `split` (train/val/test) agrupando por visitante (§4.5).
+
+    Ningún visitante queda en dos splits; se estratifica por `converted`.
+    """
+    splits = make_splits(
+        sessions["converted"].to_numpy(),
+        groups=sessions["visitor_id"].to_numpy(),
+        seed=seed,
+    )
+    split_col = np.empty(len(sessions), dtype=object)
+    for name, idx in splits.items():
+        split_col[idx] = name
+    out = sessions.copy()
+    out["split"] = split_col
+    return out
+
+
+def tabular_from_sessions(sessions: pd.DataFrame) -> pd.DataFrame:
+    """Deriva las features tabulares por sesión (§4.4) desde el parquet de sesiones.
+
+    Usadas por el baseline y K-means sobre RetailRocket. `event_types` es la
+    secuencia ya truncada (anti-leakage), con view=1 y addtocart=2.
+    """
+    ev = sessions["event_types"]
+    n_events = sessions["length"].astype(float)
+    n_views = ev.map(lambda s: sum(1 for t in s if t == 1)).astype(float)
+    n_addtocart = ev.map(lambda s: sum(1 for t in s if t == 2)).astype(float)
+    # deltas_t son log1p(segundos); duración ≈ suma de segundos reconstruidos.
+    duration = sessions["deltas_t"].map(lambda d: float(np.expm1(np.asarray(d)).sum()))
+    mean_delta = duration / n_events.clip(lower=1)
+    return pd.DataFrame(
+        {
+            "n_events": n_events,
+            "n_views": n_views,
+            "n_addtocart": n_addtocart,
+            "n_unique_items": sessions["n_unique_items"].astype(float),
+            "duration_sec": duration,
+            "mean_delta_t": mean_delta,
+            "hour_of_day": sessions["hour_of_day"].astype(float),
+            "day_of_week": sessions["day_of_week"].astype(float),
+            "addtocart_rate": (n_addtocart / n_events.clip(lower=1)),
+        }
+    )

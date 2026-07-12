@@ -112,6 +112,7 @@ TABULAR_FEATURES: list[str] = [
 # Modelos secuenciales (§5.2, §5.3) — pequeños, entrenables en CPU/MPS
 # --------------------------------------------------------------------------- #
 EMBED_DIM: int = 32
+DELTA_PROJ_DIM: int = 16   # proyección del delta_t escalar
 GRU_HIDDEN: int = 64
 GRU_LAYERS: int = 1
 

@@ -27,6 +27,7 @@ matplotlib.use("Agg")  # sin display; guardamos PNG
 import matplotlib.pyplot as plt  # noqa: E402
 
 from src import config  # noqa: E402
+from src.data import features  # noqa: E402
 
 
 def compute_metrics(
@@ -82,17 +83,88 @@ def _evaluate_uci() -> dict:
     }
 
 
+def _save_attention_heatmap(model, sessions_test, vocab: dict, device: str) -> None:
+    """Guarda el heatmap de atención de la última capa para 2-3 ejemplos (§5.3)."""
+    from src.data import sequence
+
+    examples = sessions_test[sessions_test["converted"] == 1].head(3)
+    if examples.empty:
+        examples = sessions_test.head(3)
+    ds = sequence.SessionDataset(examples, vocab["delta_mean"], vocab["delta_std"])
+    tok, dlt, _, pad_mask, _ = sequence.collate([ds[i] for i in range(len(ds))])
+    attn = model.attention(tok.to(device), dlt.to(device), pad_mask.to(device)).cpu()
+
+    label = {1: "view", 2: "cart"}
+    n = len(examples)
+    fig, axes = plt.subplots(1, n, figsize=(4 * n, 4))
+    axes = np.atleast_1d(axes)
+    for ax, (_, row), i in zip(axes, examples.iterrows(), range(n)):
+        length = int(row["length"])
+        a = attn[i, :length, :length]
+        ax.imshow(a, cmap="viridis")
+        labels = [label.get(t, "?") for t in row["event_types"][:length]]
+        ax.set_xticks(range(length), labels=labels, rotation=90, fontsize=7)
+        ax.set_yticks(range(length), labels=labels, fontsize=7)
+        ax.set_title(f"sesión {row['session_id']} (conv={row['converted']})", fontsize=9)
+    fig.suptitle("Atención — última capa del Transformer")
+    fig.tight_layout()
+    fig.savefig(config.RESULTS / "attention_heatmap.png", dpi=120)
+    plt.close(fig)
+
+
+def _evaluate_retailrocket() -> dict:
+    import torch
+
+    from src.data import sequence
+    from src.models.gru import GRUClassifier
+    from src.models.transformer import TransformerClassifier
+
+    config.ensure_dirs()
+    device = "cpu"  # inferencia en CPU (coincide con la imagen de la API)
+    vocab = json.loads((config.ARTIFACTS / "vocab.json").read_text())
+
+    sessions = pd.read_parquet(config.DATA_PROCESSED / "sessions.parquet")
+    test = sessions[sessions["split"] == "test"].reset_index(drop=True)
+    y_true = test["converted"].to_numpy()
+    models_metrics: dict[str, dict] = {}
+
+    # --- Baseline tabular ---
+    x_tab = features.tabular_from_sessions(test).to_numpy(dtype=float)
+    scaler = joblib.load(config.ARTIFACTS / "scaler.joblib")
+    base = joblib.load(config.ARTIFACTS / "baseline.joblib")
+    p_base = base.predict_proba(scaler.transform(x_tab))[:, 1]
+    models_metrics["baseline"] = compute_metrics(y_true, p_base)
+    _save_confusion(y_true, (p_base >= 0.5).astype(int), "baseline")
+
+    # --- Modelos secuenciales ---
+    test_ds = sequence.SessionDataset(test, vocab["delta_mean"], vocab["delta_std"])
+    test_loader = sequence.make_loader(test_ds, config.BATCH_SIZE, shuffle=False)
+    for name, model in (("gru", GRUClassifier()), ("transformer", TransformerClassifier())):
+        model.load_state_dict(torch.load(config.ARTIFACTS / f"{name}.pt", map_location=device))
+        model.to(device)
+        prob = sequence.predict_proba(model, test_loader, device)
+        models_metrics[name] = compute_metrics(y_true, prob)
+        _save_confusion(y_true, (prob >= 0.5).astype(int), name)
+        if name == "transformer":
+            _save_attention_heatmap(model, test, vocab, device)
+
+    return {"dataset": "retailrocket", "n_test": int(len(test)), "models": models_metrics}
+
+
 def main() -> None:
-    results = _evaluate_uci()
+    meta = json.loads((config.ARTIFACTS / "metadata.json").read_text())
+    if meta.get("dataset") == "retailrocket":
+        results = _evaluate_retailrocket()
+    else:
+        results = _evaluate_uci()
+
     (config.RESULTS / "metrics.json").write_text(
         json.dumps(results, indent=2, ensure_ascii=False)
     )
-    m = results["models"]["baseline"]
-    print(
-        f"[evaluate] baseline UCI (n_test={results['n_test']}): "
-        f"F1={m['f1']:.4f} AUC={m['auc']:.4f} acc={m['accuracy']:.4f} "
-        f"→ {config.RESULTS / 'metrics.json'}"
-    )
+    print(f"[evaluate] {results['dataset']} (n_test={results['n_test']}):")
+    for name, m in results["models"].items():
+        print(f"    {name:12s} F1={m['f1']:.4f} AUC={m['auc']:.4f} acc={m['accuracy']:.4f}")
+    print(f"    → {config.RESULTS / 'metrics.json'}")
 
 
 if __name__ == "__main__":
