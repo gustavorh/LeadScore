@@ -143,3 +143,36 @@ def tabular_from_sessions(sessions: pd.DataFrame) -> pd.DataFrame:
             "addtocart_rate": (n_addtocart / n_events.clip(lower=1)),
         }
     )
+
+
+def tabular_from_events(
+    event_types: list[str],
+    categories: list[str],
+    seconds_since_prev: list[float],
+    hour_of_day: int,
+    day_of_week: int,
+) -> pd.DataFrame:
+    """Deriva las mismas 9 features tabulares (§4.4) desde una sesión cruda (API).
+
+    `n_unique_items` se aproxima con el número de categorías distintas (la API no
+    recibe item ids); mismo cálculo de duración/tasas que en entrenamiento.
+    """
+    from src.config import TABULAR_FEATURES
+
+    n_events = float(len(event_types))
+    n_views = float(sum(1 for t in event_types if t == "view"))
+    n_addtocart = float(sum(1 for t in event_types if t == "addtocart"))
+    duration = float(sum(seconds_since_prev))
+    denom = max(n_events, 1.0)
+    row = {
+        "n_events": n_events,
+        "n_views": n_views,
+        "n_addtocart": n_addtocart,
+        "n_unique_items": float(len(set(categories))),
+        "duration_sec": duration,
+        "mean_delta_t": duration / denom,
+        "hour_of_day": float(hour_of_day),
+        "day_of_week": float(day_of_week),
+        "addtocart_rate": n_addtocart / denom,
+    }
+    return pd.DataFrame([row])[TABULAR_FEATURES]

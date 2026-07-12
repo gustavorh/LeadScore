@@ -1,0 +1,16 @@
+# Dependencias de INFERENCIA de la API (imagen liviana).
+# torch CPU desde el índice oficial para evitar las wheels de CUDA.
+--extra-index-url https://download.pytorch.org/whl/cpu
+
+torch==2.13.0
+numpy==2.4.6
+pandas==3.0.3
+pyarrow==25.0.0
+scikit-learn==1.9.0
+scipy==1.17.1
+joblib==1.5.3
+
+fastapi==0.139.0
+uvicorn[standard]==0.51.0
+pydantic==2.13.4
+python-multipart==0.0.32
