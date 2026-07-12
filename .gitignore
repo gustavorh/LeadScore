@@ -1,0 +1,30 @@
+# --- Python ---
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ipynb_checkpoints/
+
+# --- Entornos ---
+.venv/
+venv/
+.env
+
+# --- Datos (regenerables; NO se commitean) ---
+data/raw/
+data/processed/
+
+# --- Credenciales (nunca al repo) ---
+**/kaggle.json
+.kaggle/
+*.access_token
+
+# --- Modelos grandes: solo ignorar .pt si superan 100MB (los nuestros son <5MB) ---
+# (los artefactos pequeños SÍ se commitean; ver artifacts/)
+
+# --- SO / editores ---
+.DS_Store
+.idea/
+.vscode/
+
+# IMPORTANTE: artifacts/ y results/ SÍ se versionan (requisito §10).
