@@ -1,0 +1,13 @@
+# El contexto de build de la API es la raíz del repo; excluir lo pesado/innecesario.
+.venv/
+data/
+notebooks/
+results/
+tests/
+frontend/
+.git/
+__pycache__/
+**/__pycache__/
+*.pyc
+.ipynb_checkpoints/
+.pytest_cache/

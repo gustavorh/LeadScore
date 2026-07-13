@@ -27,4 +27,7 @@ data/processed/
 .idea/
 .vscode/
 
+# --- Playwright (verificación) ---
+.playwright-mcp/
+
 # IMPORTANTE: artifacts/ y results/ SÍ se versionan (requisito §10).

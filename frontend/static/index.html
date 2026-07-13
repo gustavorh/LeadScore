@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>LeadScore · Simulador de intención</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand"><span class="spark"></span> LeadScore</div>
+    <nav class="nav">
+      <a href="index.html" class="active">Simulador</a>
+      <a href="dashboard.html">Leads</a>
+    </nav>
+  </header>
+
+  <main class="wrap">
+    <!-- Publicidad: banner superior 728x90 -->
+    <div class="ad-slot banner">Espacio publicitario — Google AdSense / Bidvertiser · 728×90</div>
+    <!--
+      AdSense (pegar client-id y descomentar):
+      <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXXX" crossorigin="anonymous"></script>
+      <ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-XXXXX" data-ad-slot="0000000000" data-ad-format="horizontal"></ins>
+      <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+    -->
+
+    <div class="page-head">
+      <h1>Simulador de intención de compra</h1>
+      <p>Construye una sesión evento a evento. El score de conversión se recalcula en
+         vivo con el ensamble híbrido (baseline + GRU + Transformer).</p>
+    </div>
+
+    <div class="grid">
+      <!-- Columna izquierda: construir la sesión -->
+      <div class="col">
+        <section class="card">
+          <h2>Construir sesión</h2>
+          <div class="event-buttons">
+            <button class="btn view" data-type="view">Vio producto</button>
+            <button class="btn cart" data-type="addtocart">Agregó al carrito</button>
+            <button class="btn btn-ghost" id="undo">Deshacer</button>
+            <button class="btn btn-ghost" id="reset">Reiniciar</button>
+          </div>
+          <div class="controls">
+            <div class="field">
+              <label for="category">Categoría</label>
+              <select id="category">
+                <option>electronics</option>
+                <option>fashion</option>
+                <option>home</option>
+                <option>toys</option>
+                <option>books</option>
+                <option>grocery</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="seconds">Tiempo desde el evento previo (s)</label>
+              <select id="seconds">
+                <option value="0">inmediato (0s)</option>
+                <option value="10">10 s</option>
+                <option value="30" selected>30 s</option>
+                <option value="90">90 s</option>
+                <option value="300">5 min</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="hour">Hora del día</label>
+              <input type="number" id="hour" min="0" max="23" value="21" />
+            </div>
+            <div class="field">
+              <label for="dow">Día (0=lun)</label>
+              <input type="number" id="dow" min="0" max="6" value="4" />
+            </div>
+          </div>
+        </section>
+
+        <section class="card">
+          <h2>Línea de tiempo de la sesión</h2>
+          <ul class="timeline" id="timeline"></ul>
+        </section>
+
+        <!-- Publicidad: caja lateral 300x250 -->
+        <div class="ad-slot box">Espacio publicitario<br />300×250</div>
+      </div>
+
+      <!-- Columna derecha: score en vivo -->
+      <div class="col">
+        <section class="card gauge-card">
+          <h2>Probabilidad de conversión</h2>
+          <div class="gauge">
+            <svg viewBox="0 0 260 140" role="img" aria-label="Medidor de intención">
+              <path class="gauge-track" d="M 20 130 A 110 110 0 0 1 240 130" pathLength="100" />
+              <path class="gauge-value" id="gaugeArc" d="M 20 130 A 110 110 0 0 1 240 130"
+                    pathLength="100" stroke="var(--cold)" stroke-dasharray="0 100" />
+            </svg>
+            <div class="gauge-readout">
+              <div class="gauge-num"><span id="scoreNum">0</span><span class="pct">%</span></div>
+            </div>
+          </div>
+          <div class="band" id="band" data-band="—">— sin datos</div>
+          <div class="action" id="action">
+            <strong>Acción recomendada</strong>
+            <span id="actionText">Agrega al menos un evento para obtener un score.</span>
+          </div>
+        </section>
+
+        <section class="card">
+          <h2>Desglose por modelo</h2>
+          <div class="breakdown" id="breakdown">
+            <div class="bk-row"><span class="name">Baseline</span><div class="bar"><span data-k="baseline"></span></div><span class="val" data-v="baseline">—</span></div>
+            <div class="bk-row"><span class="name">GRU</span><div class="bar"><span data-k="gru"></span></div><span class="val" data-v="gru">—</span></div>
+            <div class="bk-row"><span class="name">Transformer</span><div class="bar"><span data-k="transformer"></span></div><span class="val" data-v="transformer">—</span></div>
+            <div class="bk-row ens"><span class="name ens">Híbrido</span><div class="bar"><span data-k="ensemble"></span></div><span class="val" data-v="ensemble">—</span></div>
+          </div>
+          <div class="action" style="border:0;padding-left:0;margin-top:14px">
+            <strong>Segmento · umbral</strong>
+            <span><span id="segment">—</span> · umbral de decisión <span id="threshold" style="font-family:var(--mono)">—</span></span>
+          </div>
+        </section>
+      </div>
+    </div>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
