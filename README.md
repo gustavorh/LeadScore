@@ -108,7 +108,8 @@ docker compose up --build       # http://localhost:8080
 ```
 
 - Simulador: `http://localhost:8080/`
-- Dashboard de leads: `http://localhost:8080/dashboard.html`
+- Dashboard de leads: `http://localhost:8080/dashboard.html` — se puede probar subiendo
+  [`data/ejemplo_leads.csv`](data/ejemplo_leads.csv) (30 leads reales del test set).
 
 ### Entorno de desarrollo (Python 3.11)
 
