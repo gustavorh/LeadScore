@@ -15,8 +15,8 @@ híbrido** que entrega el score final. Incluye segmentación no supervisada
 
 Proyecto final MSI608. Cumple los requisitos duros de la pauta: Docker con
 docker-compose (2 contenedores), Git con historial por milestone, despliegue en
-la nube, problemática de negocio con espacios publicitarios, y metodología
-visible (datos → limpieza → EDA → comparación de modelos → híbrido).
+la nube, y metodología visible (datos → limpieza → EDA → comparación de modelos
+→ híbrido).
 
 ## 1. Problemática de negocio
 
@@ -30,10 +30,6 @@ según su intención de compra estimada, y recomienda una acción por banda:
 | 🔥 caliente | ≥ 0.70 | Priorizar contacto comercial; no quemar descuento |
 | 🌡️ tibio | 0.40–0.70 | Ofrecer descuento o recordatorio de carrito |
 | ❄️ frío | < 0.40 | No invertir; retargeting de bajo costo |
-
-La monetización de la propia app se contempla con espacios publicitarios
-(`div.ad-slot`, 728×90 y 300×250) listos para Google AdSense / Bidvertiser en
-ambas páginas.
 
 ## 2. Arquitectura
 

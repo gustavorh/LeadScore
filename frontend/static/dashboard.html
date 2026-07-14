@@ -16,55 +16,37 @@
   </header>
 
   <main class="wrap">
-    <!-- Publicidad: banner superior 728x90 -->
-    <div class="ad-slot banner">Espacio publicitario — Google AdSense / Bidvertiser · 728×90</div>
-    <!--
-      AdSense (pegar client-id y descomentar):
-      <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXXX" crossorigin="anonymous"></script>
-      <ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-XXXXX" data-ad-slot="0000000000"></ins>
-      <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
-    -->
+    <div class="page-head">
+      <h1>Priorización de leads</h1>
+      <p>Sube un CSV de sesiones y obtén el score de cada lead, ordenado por
+         probabilidad. Columnas: <code>lead_id, n_views, n_addtocart, n_unique_items,
+         duration_sec, hour_of_day, day_of_week</code>.</p>
+    </div>
 
-    <div class="grid" style="grid-template-columns: 1fr 300px;">
-      <div class="col">
-        <div class="page-head">
-          <h1>Priorización de leads</h1>
-          <p>Sube un CSV de sesiones y obtén el score de cada lead, ordenado por
-             probabilidad. Columnas: <code>lead_id, n_views, n_addtocart, n_unique_items,
-             duration_sec, hour_of_day, day_of_week</code>.</p>
-        </div>
+    <div class="dropzone" id="dropzone" tabindex="0" role="button" aria-label="Subir CSV">
+      <div class="big">Arrastra un CSV aquí o haz clic para elegir</div>
+      <div class="hint">El scoring por lote usa el baseline tabular + segmento.</div>
+      <div class="mono">lead_id, n_views, n_addtocart, n_unique_items, duration_sec, hour_of_day, day_of_week</div>
+      <input type="file" id="fileInput" accept=".csv,text/csv" hidden />
+    </div>
 
-        <div class="dropzone" id="dropzone" tabindex="0" role="button" aria-label="Subir CSV">
-          <div class="big">Arrastra un CSV aquí o haz clic para elegir</div>
-          <div class="hint">El scoring por lote usa el baseline tabular + segmento.</div>
-          <div class="mono">lead_id, n_views, n_addtocart, n_unique_items, duration_sec, hour_of_day, day_of_week</div>
-          <input type="file" id="fileInput" accept=".csv,text/csv" hidden />
-        </div>
-
-        <div class="toolbar" id="toolbar" hidden>
-          <span class="count" id="count"></span>
-          <div class="field" style="flex-direction:row;align-items:center;gap:8px">
-            <label for="segFilter" style="margin:0">Segmento</label>
-            <select id="segFilter"><option value="">todos</option></select>
-          </div>
-          <button class="btn" id="sample">Cargar ejemplo</button>
-          <button class="btn btn-primary" id="download">Descargar CSV scoreado</button>
-        </div>
-
-        <div class="table-wrap" id="tableWrap" hidden>
-          <table>
-            <thead>
-              <tr><th></th><th>Lead</th><th>Probabilidad</th><th>Banda</th><th>Segmento</th><th>Acción recomendada</th></tr>
-            </thead>
-            <tbody id="tbody"></tbody>
-          </table>
-        </div>
+    <div class="toolbar" id="toolbar" hidden>
+      <span class="count" id="count"></span>
+      <div class="field" style="flex-direction:row;align-items:center;gap:8px">
+        <label for="segFilter" style="margin:0">Segmento</label>
+        <select id="segFilter"><option value="">todos</option></select>
       </div>
+      <button class="btn" id="sample">Cargar ejemplo</button>
+      <button class="btn btn-primary" id="download">Descargar CSV scoreado</button>
+    </div>
 
-      <div class="col">
-        <!-- Publicidad: caja lateral 300x250 -->
-        <div class="ad-slot box">Espacio publicitario<br />300×250</div>
-      </div>
+    <div class="table-wrap" id="tableWrap" hidden>
+      <table>
+        <thead>
+          <tr><th></th><th>Lead</th><th>Probabilidad</th><th>Banda</th><th>Segmento</th><th>Acción recomendada</th></tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+      </table>
     </div>
   </main>
 
