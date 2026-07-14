@@ -8,6 +8,10 @@ híbrido** que entrega el score final. Incluye segmentación no supervisada
 (K-means) de sesiones.
 
 > **URL pública:** _(pendiente — desplegar en un VPS siguiendo [`deploy/README.md`](deploy/README.md) y pegar aquí la URL)_
+>
+> 📋 **[Apunte para la presentación](docs/PRESENTACION.md)** — resumen del proyecto,
+> cómo se conecta con la materia (secuencias, GRU, atención, Transformers), lectura de
+> los resultados y preguntas frecuentes.
 
 Proyecto final MSI608. Cumple los requisitos duros de la pauta: Docker con
 docker-compose (2 contenedores), Git con historial por milestone, despliegue en
